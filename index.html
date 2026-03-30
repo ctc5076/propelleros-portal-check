@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PropellerOS Portal Check</title>
+<style>
+  :root{--navy:#0A2240;--teal:#2A9D8F;--gold:#C8A951;--bg:#F7F8FA;--gray:#6B7280;--light-gray:#E5E7EB;--red:#EF4444;--green:#22C55E;--yellow:#F59E0B;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:#1F2937;}
+  .header{background:var(--navy);padding:28px 32px 24px;color:white;}
+  .header h1{font-size:22px;font-weight:700;letter-spacing:-0.3px;}
+  .progress{height:3px;background:rgba(0,0,0,0.06);}
+  .progress-fill{height:100%;background:var(--teal);transition:width 0.4s ease;border-radius:0 2px 2px 0;}
+  .container{max-width:620px;margin:0 auto;padding:24px 16px 100px;}
+  .card{background:white;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06);padding:24px;margin-bottom:16px;}
+  .q-label{font-size:15px;font-weight:600;color:var(--navy);margin-bottom:4px;line-height:1.4;}
+  .q-hint{font-size:12px;color:var(--gray);margin-bottom:12px;line-height:1.4;}
+  .field-label{font-size:12px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px;}
+  .section-label{font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #F3F4F6;}
+  .instruction-box{background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:14px 16px;margin-bottom:16px;font-size:13px;color:#1E40AF;line-height:1.5;}
+  .instruction-box strong{color:#1E3A5F;}
+  .instruction-box .step-num{display:inline-block;background:#1E40AF;color:white;width:20px;height:20px;border-radius:50%;text-align:center;font-size:11px;font-weight:700;line-height:20px;margin-right:6px;}
+  input[type="text"],select,textarea{width:100%;padding:10px 14px;border:1.5px solid var(--light-gray);border-radius:8px;font-size:14px;font-family:inherit;transition:border-color 0.2s;background:white;}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(42,157,143,0.08);}
+  textarea{resize:vertical;min-height:64px;}
+  select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;}
+  .period-row{display:flex;gap:10px;margin-top:8px;}
+  .period-row select{flex:1;}
+  .pills{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{padding:9px 18px;border:2px solid var(--light-gray);border-radius:24px;background:white;font-size:14px;cursor:pointer;transition:all 0.15s;font-family:inherit;font-weight:500;color:#374151;}
+  .pill:hover{border-color:#D1D5DB;background:#FAFAFA;}
+  .pill.sel{border-color:var(--teal);background:rgba(42,157,143,0.06);color:var(--teal);font-weight:600;}
+  .pill.sel-yes{border-color:var(--green);background:rgba(34,197,94,0.06);color:#065F46;}
+  .pill.sel-no{border-color:var(--red);background:rgba(239,68,68,0.06);color:#991B1B;}
+  .pill.sel-warn{border-color:var(--yellow);background:rgba(245,158,11,0.06);color:#92400E;}
+  .verdict-pills{gap:10px;}
+  .verdict-pills .pill{padding:14px 28px;font-size:15px;border-radius:12px;}
+  .conditional{margin-top:12px;padding:14px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;}
+  .conditional .q-label{font-size:13px;color:#92400E;margin-bottom:8px;}
+  .match-grid{display:flex;flex-direction:column;gap:16px;}
+  .match-item{border:1.5px solid var(--light-gray);border-radius:10px;overflow:hidden;}
+  .match-top{display:flex;align-items:flex-start;justify-content:space-between;padding:14px;gap:14px;}
+  .match-info{flex:1;min-width:0;}
+  .metric-name{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:6px;}
+  .loc-list{margin:0;padding:0;list-style:none;}
+  .loc-list li{font-size:12px;color:#4B5563;padding:2px 0;line-height:1.5;display:flex;align-items:baseline;gap:6px;}
+  .loc-list li span.dot{color:var(--teal);font-size:6px;flex-shrink:0;position:relative;top:-1px;}
+  .match-pills{display:flex;gap:6px;flex-shrink:0;padding-top:2px;}
+  .mp{padding:6px 14px;border:1.5px solid var(--light-gray);border-radius:16px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:inherit;background:white;color:#374151;}
+  .mp:hover{border-color:#D1D5DB;}
+  .mp.mp-yes{border-color:var(--green);background:rgba(34,197,94,0.08);color:#065F46;}
+  .mp.mp-no{border-color:var(--red);background:rgba(239,68,68,0.08);color:#991B1B;}
+  .mp.mp-unsure{border-color:var(--yellow);background:rgba(245,158,11,0.08);color:#92400E;}
+  .mismatch-detail{padding:10px 14px;background:#FEF2F2;border-top:1px solid #FECACA;}
+  .mismatch-label{font-size:12px;color:#991B1B;font-weight:600;margin-bottom:6px;}
+  .mismatch-row{display:flex;gap:8px;}
+  .mismatch-row input{flex:1;font-size:13px;padding:7px 10px;}
+  .mismatch-row .vs{font-size:12px;color:var(--gray);align-self:center;}
+  .check-grid{display:flex;flex-direction:column;gap:10px;}
+  .check-item{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:1.5px solid var(--light-gray);border-radius:10px;gap:10px;}
+  .ci-left{flex:1;}
+  .ci-label{font-size:13px;font-weight:600;color:var(--navy);line-height:1.4;}
+  .ci-where{font-size:11px;color:var(--gray);margin-top:2px;}
+  .ci-note{font-size:11px;color:#6366F1;margin-top:2px;font-style:italic;}
+  .nav{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
+  .btn{padding:10px 24px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.15s;}
+  .btn-next{background:var(--teal);color:white;}
+  .btn-next:hover{background:#238B7E;}
+  .btn-next:disabled{opacity:0.4;cursor:not-allowed;}
+  .btn-back{background:transparent;color:var(--gray);}
+  .btn-back:hover{color:#374151;}
+  .btn-submit{background:var(--navy);color:white;padding:14px 36px;font-size:15px;width:100%;border-radius:10px;margin-top:8px;}
+  .btn-submit:hover{background:#0D2E54;}
+  .btn-submit:disabled{opacity:0.4;cursor:not-allowed;}
+  .summary{background:white;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,0.08);overflow:hidden;}
+  .summary-header{padding:28px 24px;text-align:center;}
+  .summary-header.pass{background:linear-gradient(135deg,#D1FAE5,#ECFDF5);}
+  .summary-header.fail{background:linear-gradient(135deg,#FEE2E2,#FEF2F2);}
+  .summary-header.unsure{background:linear-gradient(135deg,#FEF3C7,#FFFBEB);}
+  .summary-header h2{font-size:28px;margin-bottom:4px;}
+  .summary-header p{font-size:14px;color:var(--gray);}
+  .summary-body{padding:24px;}
+  .summary-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #F3F4F6;font-size:14px;}
+  .summary-row:last-child{border-bottom:none;}
+  .summary-row .label{color:var(--gray);}
+  .summary-row .val{font-weight:600;color:var(--navy);text-align:right;max-width:55%;}
+  .tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:600;}
+  .tag-pass{background:#D1FAE5;color:#065F46;}
+  .tag-fail{background:#FEE2E2;color:#991B1B;}
+  .tag-warn{background:#FEF3C7;color:#92400E;}
+  .tag-skip{background:#F3F4F6;color:#6B7280;}
+  .divider{height:1px;background:#F3F4F6;margin:16px 0;}
+  .section-title{font-size:12px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:0.5px;padding:12px 0 4px;}
+  .results-box{margin-top:16px;}
+  .results-box textarea{width:100%;min-height:200px;font-family:'Consolas','Courier New',monospace;font-size:12px;padding:12px;border:1.5px solid var(--light-gray);border-radius:10px;background:var(--bg);color:#1F2937;resize:vertical;}
+  .copy-btn{margin-top:8px;width:100%;padding:12px;background:var(--navy);border:none;border-radius:10px;font-size:14px;font-weight:600;color:white;cursor:pointer;font-family:inherit;}
+  .copy-btn:hover{background:#0D2E54;}
+  .submit-status{text-align:center;padding:20px;margin:16px 0;}
+  .submit-status .spinner{display:inline-block;width:24px;height:24px;border:3px solid var(--light-gray);border-top-color:var(--teal);border-radius:50%;animation:spin 0.8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .submit-status .msg{margin-top:8px;font-size:14px;color:var(--gray);}
+  .submit-error{background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:12px 16px;margin:12px 0;font-size:13px;color:#991B1B;}
+  .submit-ok{background:#D1FAE5;border:1px solid #A7F3D0;border-radius:10px;padding:12px 16px;margin:12px 0;font-size:13px;color:#065F46;text-align:center;}
+  @media(max-width:480px){.match-top{flex-direction:column;}.match-pills{margin-left:0!important;}.mismatch-row{flex-direction:column;}.mismatch-row .vs{display:none;}.check-item{flex-direction:column;align-items:flex-start;gap:8px;}.period-row{flex-direction:column;gap:6px;}}
+</style>
+</head>
+<body>
+<div class="header"><h1>PropellerOS Portal Check</h1></div>
+<div class="progress"><div class="progress-fill" id="bar" style="width:0%"></div></div>
+<div class="container" id="app"></div>
+
+<script>
+var timing={start:Date.now(),steps:{},end:null};
+function markStep(s){if(!timing.steps[s])timing.steps[s]=Date.now();}
+var A={},step=0,submitStatus=''; // '' | 'sending' | 'sent' | 'error'
+
+// =====================================================
+// PASTE YOUR N8N WEBHOOK URL BELOW (between the quotes)
+// =====================================================
+var WEBHOOK_URL = 'YOUR_N8N_WEBHOOK_URL_HERE';
+
+var MO=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var YR=['','2015','2016','2017','2018','2019','2020','2021','2022','2023','2024','2025','2026','2027'];
+var PAGES=['Executive Summary','P&L Analytics','Trends','Capitalization','Efficiency','Narrative','Variance','Reporting'];
+
+// Direct QBO comparison — these are line items you can pull straight from QBO
+var DATA_METRICS=[
+  {id:'revenue',name:'Net Revenue',locations:[
+    'Executive Summary &rarr; KPI card #1',
+    'P&L Analytics &rarr; Sankey diagram + Waterfall chart',
+    'Variance &rarr; P&L tab &rarr; Total Income row (MTD ACT)',
+    'Reporting &rarr; P&L tab &rarr; Total Income row',
+  ]},
+  {id:'gross_profit',name:'Gross Profit',locations:[
+    'Executive Summary &rarr; KPI card #2',
+    'P&L Analytics &rarr; Sankey diagram + Waterfall chart',
+    'Variance &rarr; P&L tab &rarr; Gross Profit row',
+    'Trends &rarr; Gross Profit &amp; Margin chart',
+  ]},
+  {id:'net_income',name:'Net Income',locations:[
+    'Variance &rarr; P&L tab &rarr; Net Income (bottom row)',
+    'Reporting &rarr; P&L tab &rarr; Net Income row',
+    'P&L Analytics &rarr; Waterfall chart (last bar)',
+  ]},
+  {id:'cash',name:'Cash Position',locations:[
+    'Executive Summary &rarr; KPI card #5',
+    'Capitalization &rarr; first hero card',
+    'Capitalization &rarr; Cash Position (Monthly) chart',
+    'Capitalization &rarr; Cash Flow Bridge &rarr; Ending Cash bar',
+  ]},
+];
+
+// Derived metrics + known problem areas — not direct QBO line items
+var ATTENTION_CHECKS=[
+  {id:'att_ebitda',label:'EBITDA looks reasonable',where:'Executive Summary &rarr; KPI card #4 (shows margin %)',note:'Derived metric. Should be Net Income + Interest + Taxes + Depreciation + Amortization.'},
+  {id:'att_runway',label:'Cash Runway months and status badge make sense',where:'Executive Summary &rarr; KPI card #6, Capitalization &rarr; second hero card',note:'Derived metric. Calculated as Ending Cash \u00F7 trailing 3-month average of monthly net income.'},
+  {id:'att_cap_in',label:'Capital IN values look correct',where:'Capitalization &rarr; Capital Story: Sources &amp; Uses &rarr; IN bars'},
+  {id:'att_cap_out',label:'Capital OUT values look correct',where:'Capitalization &rarr; Capital Story: Sources &amp; Uses &rarr; OUT bars'},
+  {id:'att_efficiency',label:'Efficiency page metrics look right',where:'Efficiency &rarr; RMF, Marketing Efficiency, Capital Efficiency sections'},
+  {id:'att_budget',label:'Budgets are loading correctly',where:'Client &rarr; Budget &rarr; check status, record count, and period range'},
+  {id:'att_budget_var',label:'Budget comparison works on Variance page',where:'Variance &rarr; Column Two dropdown &rarr; select a budget &rarr; do values populate?'},
+];
+
+var VISUAL_CHECKS=[
+  {id:'vis_sankey',label:'Sankey diagram renders and flows make sense',where:'P&L Analytics &rarr; P&L Flow chart'},
+  {id:'vis_waterfall',label:'Waterfall bars add up correctly',where:'P&L Analytics &rarr; P&L Waterfall'},
+  {id:'vis_opex',label:'OpEx Two Ways treemaps look right and totals match',where:'P&L Analytics &rarr; OpEx by Company P&L + OpEx by Propeller Overlay'},
+  {id:'vis_trends',label:'Trend lines have data for every month (no gaps)',where:'Trends &rarr; Net Revenue Trend + Growth Rate charts'},
+  {id:'vis_cashbridge',label:'Cash Flow Bridge balances (Beginning + changes = Ending)',where:'Capitalization &rarr; Cash Flow Bridge'},
+];
+
+function val(id){return A[id]||'';}
+function set(id,v){A[id]=v;render();}
+function setQuiet(id,v){A[id]=v;}
+
+function pillClass(opt,cur){if(cur!==opt)return'pill';if(opt==='Looks good'||opt==='\u2705 Yes')return'pill sel-yes';if(opt==='Something\u2019s off'||opt==='\u274C No')return'pill sel-no';if(opt==='Didn\u2019t check'||opt==='\u26A0\uFE0F Not sure')return'pill sel-warn';return'pill sel';}
+function mpClass(id,ch){var c=val(id);if(c!==ch)return'mp';if(ch==='Match')return'mp mp-yes';if(ch==='Off')return'mp mp-no';return'mp mp-unsure';}
+function ckClass(id,ch){var c=val(id);if(c!==ch)return'mp';if(ch==='Good')return'mp mp-yes';if(ch==='Issue')return'mp mp-no';return'mp mp-unsure';}
+
+function periodStr(){var m=val('period_mo'),y=val('period_yr');return(m&&y)?m+' '+y:'';}
+function moSel(id){return'<select onchange="set(\''+id+'\',this.value)">'+MO.map(function(m){return'<option value="'+m+'"'+(val(id)===m?' selected':'')+'>'+(m||'Month')+'</option>';}).join('')+'</select>';}
+function yrSel(id){return'<select onchange="set(\''+id+'\',this.value)">'+YR.map(function(y){return'<option value="'+y+'"'+(val(id)===y?' selected':'')+'>'+(y||'Year')+'</option>';}).join('')+'</select>';}
+
+var TOTAL_STEPS=10;
+function canNext(){
+  if(step===0)return val('name')&&val('client')&&val('period_mo')&&val('period_yr');
+  if(step===1)return DATA_METRICS.every(function(m){return!!val(m.id);});
+  if(step===2)return ATTENTION_CHECKS.every(function(c){return!!val(c.id);});
+  if(step===3)return!!val('coa_check');
+  if(step===4)return VISUAL_CHECKS.every(function(c){return!!val(c.id);});
+  if(step===5)return!!val('narrative');
+  if(step===6)return!!val('verdict');
+  if(step===7)return!!val('useful_page');
+  return true;
+}
+function goNext(){if(canNext()&&step<TOTAL_STEPS-1){step++;markStep(step);render();window.scrollTo({top:0,behavior:'smooth'});}}
+function goBack(){if(step>0){step--;render();}}
+function doSubmit(){
+  timing.end=Date.now();
+  submitStatus='sending';
+  step=-1;
+  render();
+  window.scrollTo({top:0,behavior:'smooth'});
+
+  var payload={
+    name:val('name'),
+    client:val('client'),
+    period:periodStr(),
+    date:new Date().toLocaleDateString(),
+    timestamp:new Date().toISOString(),
+    duration_seconds:Math.round((timing.end-timing.start)/1000),
+    duration_display:fmtDur(timing.end-timing.start),
+    verdict:vcClean(),
+    // data validation
+    revenue:val('revenue'),revenue_portal:val('revenue_portal'),revenue_qbo:val('revenue_qbo'),
+    gross_profit:val('gross_profit'),gross_profit_portal:val('gross_profit_portal'),gross_profit_qbo:val('gross_profit_qbo'),
+    net_income:val('net_income'),net_income_portal:val('net_income_portal'),net_income_qbo:val('net_income_qbo'),
+    cash:val('cash'),cash_portal:val('cash_portal'),cash_qbo:val('cash_qbo'),
+    // attention items
+    ebitda:val('att_ebitda'),runway:val('att_runway'),
+    capital_in:val('att_cap_in'),capital_out:val('att_cap_out'),
+    efficiency:val('att_efficiency'),budgets:val('att_budget'),budget_variance:val('att_budget_var'),
+    attention_notes:val('attention_notes'),
+    // coa
+    coa:val('coa_check'),coa_notes:val('coa_notes'),
+    // visuals
+    sankey:val('vis_sankey'),waterfall:val('vis_waterfall'),opex:val('vis_opex'),
+    trends:val('vis_trends'),cashbridge:val('vis_cashbridge'),visual_notes:val('visual_notes'),
+    // ai
+    narrative:val('narrative'),narrative_detail:val('narrative_detail'),
+    // verdict detail
+    verdict_reason:val('verdict_reason'),
+    // feedback
+    useful_page:val('useful_page'),kpi_request:val('kpi_request'),comeback:val('comeback'),
+    // summary text
+    full_text:buildText()
+  };
+
+  if(WEBHOOK_URL&&WEBHOOK_URL!=='YOUR_N8N_WEBHOOK_URL_HERE'){
+    fetch(WEBHOOK_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload),
+      mode:'no-cors'
+    }).then(function(){
+      submitStatus='sent';render();
+    }).catch(function(e){
+      submitStatus='error';render();
+      console.error('Webhook error:',e);
+    });
+  } else {
+    submitStatus='sent';render();
+  }
+}
+
+function renderNav(isLast){return'<div class="nav">'+(step>0?'<button class="btn btn-back" onclick="goBack()">\u2190 Back</button>':'<div></div>')+(isLast?'<button class="btn btn-submit" onclick="doSubmit()"'+(canNext()?'':' disabled')+'>Submit</button>':'<button class="btn btn-next" onclick="goNext()"'+(canNext()?'':' disabled')+'>Next \u2192</button>')+'</div>';}
+
+function renderCheckItem(c){
+  var h='<div class="check-item"><div class="ci-left"><div class="ci-label">'+c.label+'</div><div class="ci-where">'+c.where+'</div>';
+  if(c.note)h+='<div class="ci-note">'+c.note+'</div>';
+  h+='</div><div class="match-pills">'
+    +'<button class="'+ckClass(c.id,'Good')+'" onclick="set(\''+c.id+'\',\'Good\')">Good</button>'
+    +'<button class="'+ckClass(c.id,'Issue')+'" onclick="set(\''+c.id+'\',\'Issue\')">Issue</button>'
+    +'<button class="'+ckClass(c.id,'N/A')+'" onclick="set(\''+c.id+'\',\'N/A\')">N/A</button>'
+    +'</div></div>';
+  return h;
+}
+
+function renderStep(){
+  markStep(step);var h='';
+
+  // === 0: SETUP ===
+  if(step===0){
+    h+='<div class="card">'
+      +'<div style="margin-bottom:16px"><div class="q-label">Your name</div>'
+      +'<input type="text" value="'+val('name')+'" oninput="setQuiet(\'name\',this.value)" placeholder="First Last" style="margin-top:6px"></div>'
+      +'<div style="margin-bottom:20px"><div class="q-label">Client name</div>'
+      +'<input type="text" value="'+val('client')+'" oninput="setQuiet(\'client\',this.value)" placeholder="Type client name" style="margin-top:6px"></div>'
+      +'<div><div class="q-label">What is this client\u2019s most recent closed month?</div>'
+      +'<div class="q-hint">If the client just started and only has one month of data, use that month.</div>'
+      +'<div class="period-row">'+moSel('period_mo')+yrSel('period_yr')+'</div>'
+      +'</div></div>'
+      +'<div class="instruction-box">'
+      +'<strong>Before you continue:</strong><br>'
+      +'<span class="step-num">1</span>Open the portal for this client<br>'
+      +'<span class="step-num">2</span>Set the period to the closed month above (same month for From and To)<br>'
+      +'<span class="step-num">3</span>Click <strong>Apply All</strong><br>'
+      +'<span class="step-num">4</span>Open QBO for the same client and pull the P&amp;L and Balance Sheet for the same month'
+      +'</div>';
+    h+=renderNav(false);return h;
+  }
+
+  // === 1: DATA (direct QBO) ===
+  if(step===1){
+    h+='<div class="card"><div class="section-label">Data Validation</div>'
+      +'<div class="q-label">Do these numbers on the portal match QBO?</div>'
+      +'<div class="q-hint">These are line items you can pull straight from QBO. Each one lists where to find it in the portal.</div>'
+      +'<div class="match-grid" style="margin-top:16px">';
+    DATA_METRICS.forEach(function(m){
+      var v=val(m.id);
+      h+='<div class="match-item"><div class="match-top"><div class="match-info">'
+        +'<div class="metric-name">'+m.name+'</div>'
+        +'<ul class="loc-list">'+m.locations.map(function(l){return'<li><span class="dot">\u25CF</span><span>'+l+'</span></li>';}).join('')+'</ul>'
+        +'</div><div class="match-pills">'
+        +'<button class="'+mpClass(m.id,'Match')+'" onclick="set(\''+m.id+'\',\'Match\')">Match</button>'
+        +'<button class="'+mpClass(m.id,'Off')+'" onclick="set(\''+m.id+'\',\'Off\')">Off</button>'
+        +'<button class="'+mpClass(m.id,'N/A')+'" onclick="set(\''+m.id+'\',\'N/A\')">N/A</button>'
+        +'</div></div>';
+      if(v==='Off'){
+        h+='<div class="mismatch-detail"><div class="mismatch-label">'+m.name+' \u2014 what are the values?</div>'
+          +'<div class="mismatch-row">'
+          +'<input type="text" placeholder="Portal shows" value="'+val(m.id+'_portal')+'" oninput="setQuiet(\''+m.id+'_portal\',this.value)">'
+          +'<span class="vs">vs</span>'
+          +'<input type="text" placeholder="QBO shows" value="'+val(m.id+'_qbo')+'" oninput="setQuiet(\''+m.id+'_qbo\',this.value)">'
+          +'</div></div>';
+      }
+      h+='</div>';
+    });
+    h+='</div></div>';h+=renderNav(false);return h;
+  }
+
+  // === 2: EXTRA ATTENTION (derived + problem areas) ===
+  if(step===2){
+    h+='<div class="card"><div class="section-label">Extra Attention Items</div>'
+      +'<div class="q-label">Give these areas an extra look.</div>'
+      +'<div class="q-hint">These include derived metrics (not direct QBO line items) and areas we\u2019re actively improving. Your feedback helps us prioritize.</div>'
+      +'<div class="check-grid" style="margin-top:16px">';
+    ATTENTION_CHECKS.forEach(function(c){h+=renderCheckItem(c);});
+    h+='</div>'
+      +'<div style="margin-top:14px"><div class="q-hint" style="margin-bottom:4px">Notes (optional):</div>'
+      +'<textarea oninput="setQuiet(\'attention_notes\',this.value)" placeholder="e.g., Capital OUT showing $0, EBITDA looks like it\u2019s pulling Net Income, budget FCST2 has 0 records...">'+val('attention_notes')+'</textarea></div>'
+      +'</div>';
+    h+=renderNav(false);return h;
+  }
+
+  // === 3: COA ===
+  if(step===3){
+    h+='<div class="card"><div class="section-label">Chart of Accounts</div>'
+      +'<div class="q-label">Do the Variance and Reporting pages have your client\u2019s correct chart of accounts?</div>'
+      +'<div class="q-hint">Check Variance &rarr; P&amp;L and Reporting &rarr; P&amp;L. Expand the rows. Do the account names, categories, and hierarchy match what you expect for this client?</div>'
+      +'<div class="pills" style="margin-top:4px">';
+    ['Looks right','Something\u2019s wrong','Not sure'].forEach(function(o){
+      h+='<button class="'+pillClass(o,val('coa_check'))+'" onclick="set(\'coa_check\',\''+o.replace(/'/g,"\\'")+'\')">'+o+'</button>';
+    });
+    h+='</div>';
+    if(val('coa_check')==='Something\u2019s wrong'||val('coa_check')==='Not sure'){
+      h+='<div class="conditional"><div class="q-label">What looks off?</div>'
+        +'<textarea style="margin-top:6px" oninput="setQuiet(\'coa_notes\',this.value)" placeholder="e.g., missing expense categories, accounts under wrong parent...">'+val('coa_notes')+'</textarea></div>';
+    }
+    h+='</div>';h+=renderNav(false);return h;
+  }
+
+  // === 4: VISUALS ===
+  if(step===4){
+    h+='<div class="card"><div class="section-label">Charts &amp; Graphs</div>'
+      +'<div class="q-label">Quick visual spot-check across key pages.</div>'
+      +'<div class="q-hint">Navigate to each location and check if the chart looks right.</div>'
+      +'<div class="check-grid" style="margin-top:16px">';
+    VISUAL_CHECKS.forEach(function(c){h+=renderCheckItem(c);});
+    h+='</div>'
+      +'<div style="margin-top:14px"><div class="q-hint" style="margin-bottom:4px">Visual issues (optional):</div>'
+      +'<textarea oninput="setQuiet(\'visual_notes\',this.value)" placeholder="e.g., Sankey flow missing on COGS, Nov gap in trends...">'+val('visual_notes')+'</textarea></div>'
+      +'</div>';
+    h+=renderNav(false);return h;
+  }
+
+  // === 5: AI ===
+  if(step===5){
+    h+='<div class="card"><div class="section-label">AI Content</div>'
+      +'<div class="q-label">Read the Executive Summary narrative. Does anything look wrong?</div>'
+      +'<div class="q-hint">Watch for wrong numbers, weird percentages, wrong client name, or statements that don\u2019t match what you know about this client.</div>'
+      +'<div class="pills" style="margin-top:4px">';
+    ['Looks good','Something\u2019s off','Didn\u2019t check'].forEach(function(o){
+      h+='<button class="'+pillClass(o,val('narrative'))+'" onclick="set(\'narrative\',\''+o.replace(/'/g,"\\'")+'\')">'+o+'</button>';
+    });
+    h+='</div>';
+    if(val('narrative')==='Something\u2019s off'){
+      h+='<div class="conditional"><div class="q-label">What looked wrong?</div>'
+        +'<textarea style="margin-top:6px" oninput="setQuiet(\'narrative_detail\',this.value)" placeholder="e.g., says gross margin is 0.6% but KPI card shows 57%">'+val('narrative_detail')+'</textarea></div>';
+    }
+    h+='</div>';h+=renderNav(false);return h;
+  }
+
+  // === 6: VERDICT ===
+  if(step===6){
+    h+='<div class="card"><div class="section-label">Verdict</div>'
+      +'<div class="q-label">Would you show this portal to your client right now?</div>'
+      +'<div class="q-hint">Trust your gut. If anything felt off, it\u2019s a No.</div>'
+      +'<div class="pills verdict-pills" style="margin-top:4px">';
+    ['\u2705 Yes','\u274C No','\u26A0\uFE0F Not sure'].forEach(function(o){
+      h+='<button class="'+pillClass(o,val('verdict'))+'" onclick="set(\'verdict\',\''+o+'\')">'+o+'</button>';
+    });
+    h+='</div>';
+    if(val('verdict')==='\u274C No'||val('verdict')==='\u26A0\uFE0F Not sure'){
+      h+='<div class="conditional"><div class="q-label">What\u2019s the issue?</div>'
+        +'<textarea style="margin-top:6px" oninput="setQuiet(\'verdict_reason\',this.value)" placeholder="Brief description...">'+val('verdict_reason')+'</textarea></div>';
+    }
+    h+='</div>';h+=renderNav(false);return h;
+  }
+
+  // === 7: PAGE ===
+  if(step===7){
+    h+='<div class="card"><div class="section-label">Your Feedback</div>'
+      +'<div class="q-label">Which page is most useful for your client work?</div>'
+      +'<div class="q-hint">Think about your last close call or board prep.</div>'
+      +'<div class="pills" style="margin-top:4px">';
+    PAGES.forEach(function(p){h+='<button class="'+(val('useful_page')===p?'pill sel':'pill')+'" onclick="set(\'useful_page\',\''+p+'\')">'+p+'</button>';});
+    h+='</div></div>';h+=renderNav(false);return h;
+  }
+
+  // === 8: KPI ===
+  if(step===8){
+    h+='<div class="card"><div class="section-label">Your Feedback</div>'
+      +'<div class="q-label">What KPI or metric do you wish was on the portal that isn\u2019t there today?</div>'
+      +'<div class="q-hint">Think about what you calculate manually, pull from other sources, or always get asked about in client meetings.</div>'
+      +'<textarea oninput="setQuiet(\'kpi_request\',this.value)" placeholder="Optional \u2014 but this directly shapes what we build next">'+val('kpi_request')+'</textarea>'
+      +'</div>';h+=renderNav(false);return h;
+  }
+
+  // === 9: COMEBACK ===
+  if(step===9){
+    h+='<div class="card"><div class="section-label">Your Feedback</div>'
+      +'<div class="q-label">What would make you open PropellerOS between close cycles?</div>'
+      +'<div class="q-hint">We\u2019re researching what drives weekly use. \u201CNothing yet\u201D is a valid answer.</div>'
+      +'<textarea oninput="setQuiet(\'comeback\',this.value)" placeholder="Optional">'+val('comeback')+'</textarea>'
+      +'</div>';h+=renderNav(true);return h;
+  }
+  return'';
+}
+
+// --- SUMMARY ---
+function fmtDur(ms){var s=Math.floor(ms/1000),m=Math.floor(s/60);return m>0?m+'m '+(s%60)+'s':s+'s';}
+function vcClean(){var v=val('verdict');if(v.indexOf('Yes')>=0)return'PASS';if(v.indexOf('No')>=0)return'FAIL';return'UNSURE';}
+function mTag(v){if(v==='Match')return'<span class="tag tag-pass">Match</span>';if(v==='Off')return'<span class="tag tag-fail">Mismatch</span>';return'<span class="tag tag-skip">N/A</span>';}
+function cTag(v){if(v==='Good')return'<span class="tag tag-pass">Good</span>';if(v==='Issue')return'<span class="tag tag-fail">Issue</span>';return'<span class="tag tag-skip">N/A</span>';}
+function nTag(v){if(v==='Looks good')return'<span class="tag tag-pass">OK</span>';if(v==='Something\u2019s off')return'<span class="tag tag-fail">Issue</span>';return'<span class="tag tag-warn">Skipped</span>';}
+function coaTag(v){if(v==='Looks right')return'<span class="tag tag-pass">OK</span>';if(v==='Something\u2019s wrong')return'<span class="tag tag-fail">Issue</span>';return'<span class="tag tag-warn">Not sure</span>';}
+
+function buildText(){
+  var vc=vcClean(),dur=fmtDur(timing.end-timing.start),per=periodStr();
+  var L=['PROPELLEROS PORTAL CHECK',val('name')+' | '+val('client')+' | '+per+' | '+new Date(timing.start).toLocaleDateString(),'Duration: '+dur,''];
+  L.push('DATA VALIDATION (vs QBO):');
+  DATA_METRICS.forEach(function(m){var l='  '+m.name+': '+val(m.id);if(val(m.id)==='Off')l+=' (Portal: '+(val(m.id+'_portal')||'?')+' | QBO: '+(val(m.id+'_qbo')||'?')+')';L.push(l);});
+  L.push('');L.push('EXTRA ATTENTION ITEMS:');
+  ATTENTION_CHECKS.forEach(function(c){L.push('  '+c.label+': '+val(c.id));});
+  if(val('attention_notes'))L.push('  Notes: '+val('attention_notes'));
+  L.push('');L.push('CHART OF ACCOUNTS: '+val('coa_check'));
+  if(val('coa_notes'))L.push('  Notes: '+val('coa_notes'));
+  L.push('');L.push('CHARTS & GRAPHS:');
+  VISUAL_CHECKS.forEach(function(c){if(val(c.id)==='Issue')L.push('  X '+c.label);});
+  var vG=VISUAL_CHECKS.filter(function(c){return val(c.id)==='Good';}).length,vI=VISUAL_CHECKS.filter(function(c){return val(c.id)==='Issue';}).length;
+  L.push('  Summary: '+vG+' good, '+vI+' issues');
+  if(val('visual_notes'))L.push('  Notes: '+val('visual_notes'));
+  L.push('');L.push('AI NARRATIVE: '+val('narrative'));
+  if(val('narrative_detail'))L.push('  Detail: '+val('narrative_detail'));
+  L.push('');L.push('VERDICT: '+vc);
+  if(val('verdict_reason'))L.push('  Reason: '+val('verdict_reason'));
+  L.push('');L.push('FEEDBACK:');
+  L.push('  Most useful page: '+(val('useful_page')||'\u2014'));
+  L.push('  KPI request: '+(val('kpi_request')||'\u2014'));
+  L.push('  Comeback driver: '+(val('comeback')||'\u2014'));
+  return L.join('\n');
+}
+
+function selectAll(){var t=document.getElementById('resultsText');t.select();t.setSelectionRange(0,99999);}
+function resetForm(){A={};step=0;submitStatus='';timing.start=Date.now();timing.end=null;timing.steps={};render();window.scrollTo({top:0,behavior:'smooth'});}
+function tryCopy(){var t=document.getElementById('resultsText');t.select();t.setSelectionRange(0,99999);try{document.execCommand('copy');var b=document.getElementById('copyBtn');b.textContent='\u2713 Copied!';setTimeout(function(){b.textContent='Select all & copy';},2000);}catch(e){}}
+
+function renderSummary(){
+  var vc=vcClean(),dur=fmtDur(timing.end-timing.start),hClass=vc==='PASS'?'pass':vc==='FAIL'?'fail':'unsure';
+  var emoji=vc==='PASS'?'\u2705':vc==='FAIL'?'\u274C':'\u26A0\uFE0F';
+  var dataF=DATA_METRICS.filter(function(m){return val(m.id)==='Off';}).length;
+  var attF=ATTENTION_CHECKS.filter(function(c){return val(c.id)==='Issue';}).length;
+  var visF=VISUAL_CHECKS.filter(function(c){return val(c.id)==='Issue';}).length;
+  var coaF=val('coa_check')==='Something\u2019s wrong'?1:0;
+  var narF=val('narrative')==='Something\u2019s off'?1:0;
+  var total=dataF+attF+visF+coaF+narF;
+
+  var h='<div class="summary"><div class="summary-header '+hClass+'"><h2>'+emoji+' '+vc+'</h2>'
+    +'<p>'+(vc==='PASS'?'Good to show this client.':vc==='FAIL'?'Don\u2019t show this client yet. Flag Craig.':'Needs a second look. Flag Craig.')+'</p></div>'
+    +'<div class="summary-body">'
+    +'<div class="summary-row"><span class="label">Tester</span><span class="val">'+val('name')+'</span></div>'
+    +'<div class="summary-row"><span class="label">Client</span><span class="val">'+val('client')+'</span></div>'
+    +'<div class="summary-row"><span class="label">Period</span><span class="val">'+periodStr()+'</span></div>'
+    +'<div class="summary-row"><span class="label">Duration</span><span class="val">'+dur+'</span></div>';
+  if(total>0)h+='<div style="margin:14px 0;padding:10px 14px;background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;font-size:13px;color:#991B1B;font-weight:600">\u26A0\uFE0F '+total+' issue'+(total>1?'s':'')+' found \u2014 create an Asana task and notify Dub.</div>';
+
+  h+='<div class="section-title">Data (vs QBO)</div>';
+  DATA_METRICS.forEach(function(m){
+    h+='<div class="summary-row"><span class="label">'+m.name+'</span><span class="val">'+mTag(val(m.id))+'</span></div>';
+    if(val(m.id)==='Off')h+='<div style="font-size:12px;color:#991B1B;padding:0 0 6px;display:flex;justify-content:space-between"><span>Portal: '+(val(m.id+'_portal')||'?')+'</span><span>QBO: '+(val(m.id+'_qbo')||'?')+'</span></div>';
+  });
+
+  h+='<div class="section-title">Extra Attention Items</div>';
+  ATTENTION_CHECKS.forEach(function(c){h+='<div class="summary-row"><span class="label" style="font-size:13px">'+c.label+'</span><span class="val">'+cTag(val(c.id))+'</span></div>';});
+  if(val('attention_notes'))h+='<div style="font-size:12px;color:var(--gray);padding:2px 0 6px">'+val('attention_notes')+'</div>';
+
+  h+='<div class="section-title">Chart of Accounts</div>'
+    +'<div class="summary-row"><span class="label">Variance &amp; Reporting COA</span><span class="val">'+coaTag(val('coa_check'))+'</span></div>';
+  if(val('coa_notes'))h+='<div style="font-size:12px;color:var(--gray);padding:2px 0 6px">'+val('coa_notes')+'</div>';
+
+  h+='<div class="section-title">Charts &amp; Graphs</div>';
+  var vG=VISUAL_CHECKS.filter(function(c){return val(c.id)==='Good';}).length;
+  h+='<div class="summary-row"><span class="label">Visual checks</span><span class="val">'+vG+'/'+VISUAL_CHECKS.length+' good'+(visF>0?', <span style="color:#991B1B">'+visF+' issues</span>':'')+'</span></div>';
+  VISUAL_CHECKS.forEach(function(c){if(val(c.id)==='Issue')h+='<div style="font-size:12px;color:#991B1B;padding:2px 0">\u274C '+c.label+'</div>';});
+  if(val('visual_notes'))h+='<div style="font-size:12px;color:var(--gray);padding:2px 0 6px">'+val('visual_notes')+'</div>';
+
+  h+='<div class="section-title">AI Content</div>'
+    +'<div class="summary-row"><span class="label">Narrative</span><span class="val">'+nTag(val('narrative'))+'</span></div>';
+  if(val('narrative_detail'))h+='<div style="font-size:12px;color:var(--gray);padding:0 0 6px">'+val('narrative_detail')+'</div>';
+  if(val('verdict_reason'))h+='<div class="divider"></div><div style="font-size:13px;color:#991B1B;padding:4px 0">Issue: '+val('verdict_reason')+'</div>';
+
+  h+='<div class="divider"></div><div class="section-title">Feedback</div>'
+    +'<div class="summary-row"><span class="label">Most useful page</span><span class="val">'+(val('useful_page')||'\u2014')+'</span></div>';
+  if(val('kpi_request'))h+='<div class="summary-row"><span class="label">KPI request</span><span class="val">'+val('kpi_request')+'</span></div>';
+  if(val('comeback'))h+='<div class="summary-row"><span class="label">Comeback driver</span><span class="val">'+val('comeback')+'</span></div>';
+
+  h+='<div class="divider"></div><div class="results-box">'
+    +'<div class="field-label" style="margin-bottom:6px">Results \u2014 select and copy to paste into Teams or Asana</div>'
+    +'<textarea id="resultsText" readonly onclick="selectAll()">'+buildText()+'</textarea>'
+    +'<button class="copy-btn" id="copyBtn" onclick="tryCopy()">Select all &amp; copy</button>'
+    +'<button class="copy-btn" style="margin-top:8px;background:var(--teal);color:white;border-color:var(--teal)" onclick="resetForm()">Start new check</button>'
+    +'</div></div></div>';
+  return h;
+}
+
+function render(){
+  var app=document.getElementById('app');
+  var pct=step<0?100:((step+1)/TOTAL_STEPS)*100;
+  document.getElementById('bar').style.width=pct+'%';
+  if(step<0){
+    if(submitStatus==='sending'){
+      app.innerHTML='<div class="card"><div class="submit-status"><div class="spinner"></div><div class="msg">Submitting your check...</div></div></div>';
+      return;
+    }
+    var statusHtml='';
+    if(submitStatus==='sent') statusHtml='<div class="submit-ok">Response saved.</div>';
+    if(submitStatus==='error') statusHtml='<div class="submit-error">Could not reach the server, but your results are below. Copy and paste them into Teams or Asana.</div>';
+    app.innerHTML=statusHtml+renderSummary();
+    return;
+  }
+  app.innerHTML=renderStep();
+}
+
+markStep(0);render();
+</script>
+</body>
+</html>
