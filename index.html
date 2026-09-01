@@ -207,7 +207,7 @@ function doSubmit(){
     name:val('name'),
     client:val('client'),
     period:periodStr(),
-    date:new Date().toLocaleDateString(),
+    date:new Date().toISOString().slice(0,10),
     timestamp:new Date().toISOString(),
     duration_seconds:Math.round((timing.end-timing.start)/1000),
     duration_display:fmtDur(timing.end-timing.start),
