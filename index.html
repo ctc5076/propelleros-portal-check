@@ -207,7 +207,7 @@ function doSubmit(){
     name:val('name'),
     client:val('client'),
     period:periodStr(),
-    date:new Date().toISOString().slice(0,10),
+    date:(function(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');})(),
     timestamp:new Date().toISOString(),
     duration_seconds:Math.round((timing.end-timing.start)/1000),
     duration_display:fmtDur(timing.end-timing.start),
